@@ -86,8 +86,19 @@ foldr fetch https://example.com/template.foldr template_name
 
 ## 📁 Template Storage
 
-- Templates are stored in: `~/.foldr/templates/`
+- Templates are stored in: 
+  - `~/.foldr/templates/` on linux and mac 
+  - `%USERPROFILE%\foldr\templates` on windows
 - Each template is saved as a `.foldr` file with versioning support (its really just a zip file containing the folder and also some metadata)
+
+---
+
+## ⚙️  Configuration
+
+- configurations are stored in `~/.foldr/config.json` or the file stored in the `--config` flag
+- the config file can be created using the `foldr config` command which will create the configuration using an interactive cli
+- for config options see [Configuration](Configuration.md)
+- Note: By default foldr uses a small sqlite database cache to speed up searching and listing for templates. This can be disabled with the `use_cache` key in the config. When disabled searching and listing will manually walk the templates directory and list the templates that way, which is much slower if you have alot of templates.
 
 ---
 
