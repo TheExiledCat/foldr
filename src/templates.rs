@@ -67,6 +67,7 @@ impl Template {
     pub fn get_existing_by_name(config: &Config, name: &str) -> Option<Template> {
         let mut templates = ZipUtil::get_templates(&config.template_dir);
         templates.sort_by_key(|t| t.info.iteration);
+        templates.reverse();
         for template in templates {
             if template.info.name == name {
                 return Some(template);

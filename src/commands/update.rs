@@ -8,8 +8,8 @@ use super::command::{RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct UpdateCommand {
-    pub directory: PathBuf,
     pub name: String,
+    pub directory: PathBuf,
 }
 
 impl RunCommand for UpdateCommand {
