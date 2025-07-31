@@ -1,18 +1,13 @@
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
-    os::unix::fs::MetadataExt,
     path::PathBuf,
 };
 
 use walkdir::WalkDir;
-use zip::{
-    ZipArchive, ZipWriter,
-    unstable::{LittleEndianWriteExt, stream::ZipStreamReader},
-    write::SimpleFileOptions,
-};
+use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
-use crate::templates::{self, TemplateInfo};
+use crate::templates::Template;
 
 pub struct ZipUtil;
 
@@ -59,23 +54,27 @@ impl ZipUtil {
         let result = writer.finish().unwrap();
         return result.metadata().unwrap().len();
     }
-    pub fn get_template_infos(template_dir: &PathBuf) -> Vec<TemplateInfo> {
+    pub fn get_templates(template_dir: &PathBuf) -> Vec<Template> {
         if !template_dir.is_dir() {
             return vec![];
         }
-
-        let mut infos: Vec<TemplateInfo> = vec![];
-        for entry in WalkDir::new(template_dir) {
+        let mut templates: Vec<Template> = vec![];
+        for entry in WalkDir::new(template_dir).into_iter().skip(1) {
             let entry = entry.unwrap();
             let path = entry.path();
             let file = File::open(path).unwrap();
+            let size = file.metadata().unwrap().len();
             let mut zip = ZipArchive::new(BufReader::new(file)).unwrap();
             let mut manifest_file = zip.by_name(".foldrmanifest.json").unwrap();
             let mut manifest_content = String::new();
             manifest_file.read_to_string(&mut manifest_content).unwrap();
-            infos.push(serde_json::from_str(&manifest_content).unwrap());
+            templates.push(Template {
+                info: serde_json::from_str(&manifest_content).unwrap(),
+                filename: String::from(path.to_string_lossy()),
+                filesize: bytesize::ByteSize::b(size),
+            });
         }
 
-        return infos;
+        return templates;
     }
 }

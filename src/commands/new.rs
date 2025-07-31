@@ -10,12 +10,12 @@ use crate::{
 use super::command::{RunCommand, error};
 
 #[derive(Args, Debug)]
-pub struct SaveCommand {
-    pub directory: PathBuf,
+pub struct NewCommand {
     pub name: String,
+    pub iteration: Option<u64>,
 }
 
-impl RunCommand for SaveCommand {
+impl RunCommand for NewCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
         let existing = Template::get_existing_by_name(&config, &self.name);
         if let Some(template) = existing {

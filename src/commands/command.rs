@@ -5,14 +5,14 @@ use reqwest::Url;
 
 use crate::config::Config;
 
-use super::{list::ListCommand, save::SaveCommand};
+use super::{delete::DeleteCommand, list::ListCommand, new::NewCommand, save::SaveCommand};
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(about = "Save a new template")]
     Save(SaveCommand),
     #[command(about = "Spawn an existing template")]
-    New {},
+    New(NewCommand),
     #[command(about = "Install a template from an http endpoint")]
     Fetch {},
     #[command(about = "List all templates")]
@@ -25,6 +25,8 @@ pub enum Command {
     Update {},
     #[command(about = "Purge older versions of templates")]
     Purge {},
+    #[command(about = "Delete all versions of a template")]
+    Delete(DeleteCommand),
     #[cfg(feature = "tui")]
     #[command(about = "")]
     Tui,
@@ -33,7 +35,7 @@ pub enum Command {
 pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
     return match command {
         Command::Save(save_command) => save_command.run(config),
-        Command::New {} => todo!(),
+        Command::New(new_command) => new_command.run(config),
         Command::Fetch {} => todo!(),
         Command::List(list_command) => list_command.run(config),
         Command::Show {} => todo!(),
@@ -41,6 +43,7 @@ pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
         Command::Purge {} => todo!(),
         #[cfg(feature = "tui")]
         Command::Tui => todo!(),
+        Command::Delete(delete_command) => delete_command.run(config),
     };
 }
 pub struct CommandError {

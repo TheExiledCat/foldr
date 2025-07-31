@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub template_dir: PathBuf,
+    pub use_cache: bool,
 }
 
 impl Config {
@@ -15,6 +16,7 @@ impl Config {
                     .expect("Home env variable must be set")
                     .join(".foldr/templates"),
             ),
+            use_cache: true,
         }
     }
 }

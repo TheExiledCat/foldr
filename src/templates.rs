@@ -5,6 +5,7 @@ use std::{
 };
 
 use bytesize::ByteSize;
+use clap::FromArgMatches;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -12,12 +13,13 @@ use crate::zip::ZipUtil;
 use crate::{commands::command::error, config::Config};
 use sha2::{Digest, Sha256};
 
+#[derive(Clone)]
 pub struct Template {
-    info: TemplateInfo,
+    pub info: TemplateInfo,
     pub filename: String,
     pub filesize: ByteSize,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TemplateInfo {
     pub name: String,
     pub iteration: usize,
@@ -57,21 +59,34 @@ impl Template {
             filesize: ByteSize::b(filesize),
         });
     }
-    pub fn get_existing_by_name(config: &Config, name: &str) -> Option<TemplateInfo> {
-        let templates = ZipUtil::get_template_infos(&config.template_dir);
-
+    pub fn get_existing_by_name(config: &Config, name: &str) -> Option<Template> {
+        let mut templates = ZipUtil::get_templates(&config.template_dir);
+        templates.sort_by_key(|t| t.info.iteration);
         for template in templates {
-            if template.name == name {
+            if template.info.name == name {
                 return Some(template);
             }
         }
 
         return None;
     }
-    pub fn get_existing(config: &Config) -> Vec<TemplateInfo> {
-        let templates = ZipUtil::get_template_infos(&config.template_dir);
+    pub fn get_existing(config: &Config) -> Vec<Template> {
+        let templates = ZipUtil::get_templates(&config.template_dir);
 
         return templates;
+    }
+
+    pub fn delete_by_name(config: &Config, name: &str) -> bool {
+        let templates = Self::get_existing(config);
+
+        for template in templates {
+            if template.info.name == name {
+                println!("Deleting template file: {}", template.filename);
+                fs::remove_file(template.filename).unwrap();
+            }
+        }
+
+        return true;
     }
 }
 impl TemplateInfo {
