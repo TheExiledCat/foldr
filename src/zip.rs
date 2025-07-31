@@ -1,13 +1,13 @@
 use std::{
-    fs::File,
-    io::{BufReader, Read, Write},
+    fs::{self, File},
+    io::{self, BufReader, Read, Write},
     path::PathBuf,
 };
 
 use walkdir::WalkDir;
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
-use crate::templates::Template;
+use crate::{globals, templates::Template};
 
 pub struct ZipUtil;
 
@@ -34,7 +34,6 @@ impl ZipUtil {
         for entry in WalkDir::new(input_dir) {
             let entry = entry.unwrap();
             let path = entry.path();
-            println!("compressing {}", path.to_string_lossy());
             if path.is_file() {
                 let relative_path = path.strip_prefix(input_dir).unwrap();
                 writer
@@ -65,7 +64,7 @@ impl ZipUtil {
             let file = File::open(path).unwrap();
             let size = file.metadata().unwrap().len();
             let mut zip = ZipArchive::new(BufReader::new(file)).unwrap();
-            let mut manifest_file = zip.by_name(".foldrmanifest.json").unwrap();
+            let mut manifest_file = zip.by_name(&globals::FOLDR_MANIFEST_FILE).unwrap();
             let mut manifest_content = String::new();
             manifest_file.read_to_string(&mut manifest_content).unwrap();
             templates.push(Template {
@@ -76,5 +75,33 @@ impl ZipUtil {
         }
 
         return templates;
+    }
+    pub fn unzip(template: &Template, path: &PathBuf, hide_from_output: Vec<PathBuf>) {
+        let zip_to_open = &template.filename;
+        let file = File::open(zip_to_open).unwrap();
+        let mut zip = ZipArchive::new(file).unwrap();
+
+        for i in 0..zip.len() {
+            let mut file = zip.by_index(i).unwrap();
+            if hide_from_output
+                .iter()
+                .find(|p| p.to_string_lossy() == file.name())
+                .iter()
+                .len()
+                > 0
+            {
+                continue;
+            }
+            let out_path = path.join(file.name());
+            if file.name().ends_with("/") {
+                fs::create_dir_all(&out_path).unwrap();
+            } else {
+                if let Some(parent) = out_path.parent() {
+                    fs::create_dir_all(parent).unwrap();
+                }
+                let mut out_file = File::create(&out_path).unwrap();
+                io::copy(&mut file, &mut out_file).unwrap();
+            }
+        }
     }
 }

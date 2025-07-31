@@ -1,4 +1,4 @@
-use std::{env, os::unix::process::ExitStatusExt, process::ExitCode};
+use std::process::ExitCode;
 
 use clap::{CommandFactory, Parser};
 use commands::command::run;
@@ -6,6 +6,7 @@ use commands::command::run;
 mod cli;
 mod commands;
 mod config;
+mod globals;
 mod templates;
 mod zip;
 

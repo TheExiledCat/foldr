@@ -1,11 +1,11 @@
-use std::path::PathBuf;
-
 use clap::Subcommand;
-use reqwest::Url;
 
 use crate::config::Config;
 
-use super::{delete::DeleteCommand, list::ListCommand, new::NewCommand, save::SaveCommand};
+use super::{
+    delete::DeleteCommand, list::ListCommand, new::NewCommand, save::SaveCommand,
+    update::UpdateCommand,
+};
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
@@ -22,7 +22,7 @@ pub enum Command {
     #[command(
         about = "Update a template with a new version. Does not overwrite the previous version"
     )]
-    Update {},
+    Update(UpdateCommand),
     #[command(about = "Purge older versions of templates")]
     Purge {},
     #[command(about = "Delete all versions of a template")]
@@ -39,7 +39,7 @@ pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
         Command::Fetch {} => todo!(),
         Command::List(list_command) => list_command.run(config),
         Command::Show {} => todo!(),
-        Command::Update {} => todo!(),
+        Command::Update(update_command) => update_command.run(config),
         Command::Purge {} => todo!(),
         #[cfg(feature = "tui")]
         Command::Tui => todo!(),

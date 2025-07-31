@@ -1,16 +1,15 @@
 use std::{
-    fs::{self, File},
+    fs::{self},
     ops::Deref,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use bytesize::ByteSize;
-use clap::FromArgMatches;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::zip::ZipUtil;
 use crate::{commands::command::error, config::Config};
+use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
@@ -22,14 +21,20 @@ pub struct Template {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TemplateInfo {
     pub name: String,
-    pub iteration: usize,
+    pub iteration: u64,
 }
 
 impl Template {
+    pub fn spawn(&self, spawn_path: &PathBuf) {
+        let with_root = !spawn_path.exists();
+
+        ZipUtil::unzip(&self, spawn_path, vec![globals::FOLDR_MANIFEST_FILE.into()]);
+    }
     pub fn save(
         config: &Config,
         directory: &PathBuf,
         name: &str,
+        iteration: u64,
     ) -> Result<Template, crate::commands::command::CommandError> {
         if let Ok(exists) = fs::exists(directory) {
             if !exists {
@@ -40,10 +45,10 @@ impl Template {
         }
 
         //load dir into memory TODO make version actually increment
-        let info = TemplateInfo::new(name.into(), 1);
+        let info = TemplateInfo::new(name.into(), iteration);
         let output_path = info.generate_output_path(config);
         let extra_files = vec![(
-            PathBuf::from(".foldrmanifest.json"),
+            PathBuf::from(globals::FOLDR_MANIFEST_FILE),
             json!(info).to_string(),
         )];
         let filesize = ZipUtil::zip_dir(directory, &output_path, extra_files);
@@ -70,6 +75,20 @@ impl Template {
 
         return None;
     }
+    pub fn get_existing_by_name_and_iteration(
+        config: &Config,
+        name: &str,
+        iteration: u64,
+    ) -> Option<Template> {
+        let templates = ZipUtil::get_templates(&config.template_dir);
+        for template in templates {
+            if template.info.name == name && template.info.iteration == iteration {
+                return Some(template);
+            }
+        }
+
+        return None;
+    }
     pub fn get_existing(config: &Config) -> Vec<Template> {
         let templates = ZipUtil::get_templates(&config.template_dir);
 
@@ -90,7 +109,7 @@ impl Template {
     }
 }
 impl TemplateInfo {
-    pub fn new(name: String, iteration: usize) -> Self {
+    pub fn new(name: String, iteration: u64) -> Self {
         return Self { name, iteration };
     }
     pub fn generate_output_path(&self, config: &Config) -> PathBuf {
