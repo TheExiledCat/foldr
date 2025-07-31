@@ -17,7 +17,7 @@ impl RunCommand for SaveCommand {
         let existing = Template::get_existing_by_name(&config, &self.name);
         if let Some(template) = existing {
             return Err(error(&format!(
-                "Template with the same name already exists: {}",
+                "Template with the same name already exists: {}\nUse foldr update to overwrite",
                 &self.name
             )));
         }

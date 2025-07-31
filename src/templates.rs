@@ -8,7 +8,7 @@ use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{commands::command::error, config::Config};
+use crate::{cli::CliUtils, commands::command::error, config::Config};
 use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
@@ -99,14 +99,35 @@ impl Template {
     pub fn delete_by_name(config: &Config, name: &str) -> bool {
         let templates = Self::get_existing(config);
 
+        let mut found = false;
         for template in templates {
             if template.info.name == name {
                 println!("Deleting template file: {}", template.filename);
                 fs::remove_file(template.filename).unwrap();
+
+                found = true;
             }
         }
 
-        return true;
+        return found;
+    }
+    pub fn delete_by_name_and_iteration(config: &Config, name: &str, iteration: u64) -> bool {
+        let templates = Self::get_existing(config);
+
+        let mut found = false;
+        for template in templates {
+            if template.info.name == name && template.info.iteration == iteration {
+                println!(
+                    "Deleting template file: {} version {}",
+                    template.filename, template.info.iteration
+                );
+                fs::remove_file(template.filename).unwrap();
+
+                found = true;
+            }
+        }
+
+        return found;
     }
 }
 impl TemplateInfo {
