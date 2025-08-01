@@ -3,8 +3,8 @@ use clap::Subcommand;
 use crate::config::Config;
 
 use super::{
-    delete::DeleteCommand, list::ListCommand, new::NewCommand, save::SaveCommand,
-    update::UpdateCommand,
+    delete::DeleteCommand, list::ListCommand, new::NewCommand, purge::PurgeCommand,
+    save::SaveCommand, update::UpdateCommand,
 };
 
 #[derive(Subcommand, Debug)]
@@ -24,8 +24,8 @@ pub enum Command {
     )]
     Update(UpdateCommand),
     #[command(about = "Purge older versions of templates")]
-    Purge {},
-    #[command(about = "Delete all versions of a template")]
+    Purge(PurgeCommand),
+    #[command(about = "Delete all or a specific version of a template")]
     Delete(DeleteCommand),
     #[cfg(feature = "tui")]
     #[command(about = "")]
@@ -40,7 +40,7 @@ pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
         Command::List(list_command) => list_command.run(config),
         Command::Show {} => todo!(),
         Command::Update(update_command) => update_command.run(config),
-        Command::Purge {} => todo!(),
+        Command::Purge(purge_command) => purge_command.run(config),
         #[cfg(feature = "tui")]
         Command::Tui => todo!(),
         Command::Delete(delete_command) => delete_command.run(config),

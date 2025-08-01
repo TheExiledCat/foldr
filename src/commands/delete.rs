@@ -31,7 +31,7 @@ impl RunCommand for DeleteCommand {
             Template::delete_by_name(&config, &self.name)
         };
         if !success {
-            return Err(error("Unable to find template"));
+            return Err(error(&format!("Unable to find template: {}", &self.name)));
         }
         return Ok(());
     }

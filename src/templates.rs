@@ -91,7 +91,11 @@ impl Template {
         return None;
     }
     pub fn get_existing(config: &Config) -> Vec<Template> {
-        let templates = ZipUtil::get_templates(&config.template_dir);
+        let mut templates = ZipUtil::get_templates(&config.template_dir);
+
+        templates.sort_by_key(|t| t.info.iteration);
+        templates.sort_by_key(|t| t.info.name.clone());
+        templates.reverse();
 
         return templates;
     }
@@ -119,7 +123,7 @@ impl Template {
             if template.info.name == name && template.info.iteration == iteration {
                 println!(
                     "Deleting template file: {} version {}",
-                    template.filename, template.info.iteration
+                    template.info.name, template.info.iteration
                 );
                 fs::remove_file(template.filename).unwrap();
 

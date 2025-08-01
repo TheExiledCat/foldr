@@ -22,8 +22,9 @@ impl CliUtils {
     pub fn input(message: &str) -> String {
         let stdin = stdin();
         stdout().flush();
-        println!("{}\n> ", message);
+        print!("{}\n> ", message);
         let mut text = String::new();
+        stdout().flush();
         stdin.read_line(&mut text).unwrap();
         if let Some('\n') = text.chars().next_back() {
             text.pop();
