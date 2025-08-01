@@ -41,9 +41,10 @@ pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
         Command::Show {} => todo!(),
         Command::Update(update_command) => update_command.run(config),
         Command::Purge(purge_command) => purge_command.run(config),
+
+        Command::Delete(delete_command) => delete_command.run(config),
         #[cfg(feature = "tui")]
         Command::Tui => todo!(),
-        Command::Delete(delete_command) => delete_command.run(config),
     };
 }
 pub struct CommandError {

@@ -23,3 +23,9 @@ zip = "4.3.0"
 
 [features]
 tui = []
+
+
+[profile.release]
+strip = true
+panic = "abort"
+
