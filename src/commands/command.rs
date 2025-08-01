@@ -4,7 +4,7 @@ use crate::config::Config;
 
 use super::{
     delete::DeleteCommand, list::ListCommand, new::NewCommand, purge::PurgeCommand,
-    save::SaveCommand, update::UpdateCommand,
+    save::SaveCommand, show::ShowCommand, update::UpdateCommand,
 };
 
 #[derive(Subcommand, Debug)]
@@ -18,7 +18,7 @@ pub enum Command {
     #[command(about = "List all templates")]
     List(ListCommand),
     #[command(about = "List the contents of a template")]
-    Show {},
+    Show(ShowCommand),
     #[command(
         about = "Update a template with a new version. Does not overwrite the previous version"
     )]
@@ -38,7 +38,7 @@ pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
         Command::New(new_command) => new_command.run(config),
         Command::Fetch {} => todo!(),
         Command::List(list_command) => list_command.run(config),
-        Command::Show {} => todo!(),
+        Command::Show(show_command) => show_command.run(config),
         Command::Update(update_command) => update_command.run(config),
         Command::Purge(purge_command) => purge_command.run(config),
 

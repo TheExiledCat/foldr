@@ -4,4 +4,5 @@ pub mod list;
 pub mod new;
 pub mod purge;
 pub mod save;
+pub mod show;
 pub mod update;

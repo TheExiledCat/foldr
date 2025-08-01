@@ -104,4 +104,21 @@ impl ZipUtil {
             }
         }
     }
+
+    pub fn get_files(filename: PathBuf, hide_from_output: Vec<String>) -> Vec<PathBuf> {
+        let file = File::open(filename).unwrap();
+
+        let mut zip = ZipArchive::new(file).unwrap();
+
+        let mut file_names: Vec<PathBuf> = vec![];
+
+        for i in 0..zip.len() {
+            let mut file = zip.by_index(i).unwrap();
+            if hide_from_output.contains(&file.name().to_owned()) {
+                continue;
+            }
+            file_names.push(file.name().into());
+        }
+        return file_names;
+    }
 }

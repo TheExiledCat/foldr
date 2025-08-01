@@ -1,14 +1,18 @@
 use std::{
+    fmt::Display,
     fs::{self},
     ops::Deref,
     path::PathBuf,
+    str::FromStr,
 };
 
 use bytesize::ByteSize;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{cli::CliUtils, commands::command::error, config::Config};
+use crate::{
+    cli::CliUtils, commands::command::error, config::Config, globals::FOLDR_MANIFEST_FILE,
+};
 use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
@@ -24,11 +28,45 @@ pub struct TemplateInfo {
     pub iteration: u64,
 }
 
+pub struct TemplateHierarchy {
+    pub name: String,
+    pub children: Vec<TemplateHierarchy>,
+    pub depth: u8,
+}
+impl TemplateHierarchy {
+    pub fn new(name: String, depth: u8) -> Self {
+        return Self {
+            name,
+            children: vec![],
+            depth,
+        };
+    }
+    pub fn add_child(&mut self, name: String) {
+        self.children
+            .push(TemplateHierarchy::new(name, self.depth + 1));
+    }
+}
+impl Display for TemplateHierarchy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 impl Template {
     pub fn spawn(&self, spawn_path: &PathBuf) {
-        let with_root = !spawn_path.exists();
-
         ZipUtil::unzip(&self, spawn_path, vec![globals::FOLDR_MANIFEST_FILE.into()]);
+    }
+    pub fn get_content_hierarchy(&self) -> TemplateHierarchy {
+        let root = TemplateHierarchy::new(self.info.name.clone(), 0);
+        let contents = ZipUtil::get_files(
+            PathBuf::from_str(&self.filename).unwrap(),
+            vec![FOLDR_MANIFEST_FILE.into()],
+        );
+
+        for file in contents {
+            println!("{}", file.to_string_lossy());
+        }
+        return root;
     }
     pub fn save(
         config: &Config,
