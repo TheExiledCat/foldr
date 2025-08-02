@@ -41,14 +41,39 @@ impl TemplateHierarchy {
             depth,
         };
     }
-    pub fn add_child(&mut self, name: String) {
+    pub fn add_child(&mut self, name: String) -> &mut TemplateHierarchy {
         self.children
             .push(TemplateHierarchy::new(name, self.depth + 1));
+        let added = self.children.last_mut().unwrap();
+        return added;
+    }
+    pub fn add_content_children_rec(&mut self, index: usize, all_content: &Vec<PathBuf>) -> usize {
+        let mut index = index;
+        let mut delta = 0;
+        while index < all_content.len() {
+            let file = &all_content[index];
+            if file.ends_with("/") {
+                //is dir
+                let child = self.add_child(file.to_string_lossy().into_owned());
+                index += child.add_content_children_rec(index + 1, &all_content);
+            }
+            index += 1;
+            delta += 1;
+        }
+        return delta;
+    }
+
+    fn print_children_rec(&self) {
+        println!("{}", self.name);
+        for child in &self.children {
+            child.print_children_rec();
+        }
     }
 }
 impl Display for TemplateHierarchy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        self.print_children_rec();
+        return Ok(());
     }
 }
 
@@ -57,17 +82,16 @@ impl Template {
         ZipUtil::unzip(&self, spawn_path, vec![globals::FOLDR_MANIFEST_FILE.into()]);
     }
     pub fn get_content_hierarchy(&self) -> TemplateHierarchy {
-        let root = TemplateHierarchy::new(self.info.name.clone(), 0);
-        let contents = ZipUtil::get_files(
+        let mut root = TemplateHierarchy::new(self.info.name.clone(), 0);
+        let mut contents = ZipUtil::get_files(
             PathBuf::from_str(&self.filename).unwrap(),
             vec![FOLDR_MANIFEST_FILE.into()],
         );
-
-        for file in contents {
-            println!("{}", file.to_string_lossy());
-        }
+        contents.sort_by_key(|p| p.to_string_lossy().into_owned());
+        root.add_content_children_rec(0, &contents);
         return root;
     }
+
     pub fn save(
         config: &Config,
         directory: &PathBuf,

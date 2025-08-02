@@ -114,10 +114,21 @@ impl ZipUtil {
 
         for i in 0..zip.len() {
             let mut file = zip.by_index(i).unwrap();
-            if hide_from_output.contains(&file.name().to_owned()) {
+            if file.name() == "/" {
                 continue;
             }
-            file_names.push(file.name().into());
+            if hide_from_output.contains(
+                &file
+                    .enclosed_name()
+                    .expect(
+                        "The archive should not contain files with paths outside of the archive",
+                    )
+                    .to_string_lossy()
+                    .into_owned(),
+            ) {
+                continue;
+            }
+            file_names.push(file.enclosed_name().expect("Dangerous zip file").into());
         }
         return file_names;
     }
