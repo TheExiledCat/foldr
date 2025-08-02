@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::Display,
     fs::{self},
     ops::Deref,
@@ -8,6 +9,7 @@ use std::{
 
 use bytesize::ByteSize;
 use itertools::Itertools;
+use ptree::{TreeBuilder, TreeItem, print_tree};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -27,7 +29,7 @@ pub struct TemplateInfo {
     pub iteration: u64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TemplateHierarchy {
     pub path: PathBuf,
     pub children: Vec<TemplateHierarchy>,
@@ -46,56 +48,6 @@ impl TemplateHierarchy {
         root.path = template_name.into();
         return root;
     }
-    fn print_children_rec(&self, depth: u8, lastness_tree: Vec<bool>) {
-        if depth == 0 {
-            println!(
-                "{}{}",
-                "    ".repeat(depth as usize),
-                self.path.to_string_lossy()
-            );
-        }
-
-        for child in &self.children {
-            let mut lastness_new = lastness_tree.clone();
-            if child.path == self.children.last().unwrap().path {
-                lastness_new.push(true);
-            } else {
-                lastness_new.push(false);
-            }
-            println!(
-                "{}{}{}{}{}",
-                "   ".repeat((depth) as usize),
-                lastness_new
-                    .iter()
-                    .map(|b| if *b == true {
-                        let mut text = String::new();
-                        if depth > 0 {
-                            text.push_str(&"    ".repeat((depth - 1) as usize));
-                        } else {
-                            text.push_str(&"    ".repeat((depth + 1) as usize));
-                        }
-                        text.push_str("|");
-                        text.push_str(&"   ".repeat((depth + 1) as usize));
-                        text
-                    } else {
-                        "   ".repeat((depth + 1) as usize)
-                    })
-                    .join(""),
-                if child.path == self.children.last().unwrap().path {
-                    "└"
-                } else {
-                    "├"
-                },
-                "───",
-                child.path.file_name().unwrap().to_string_lossy()
-            );
-            if child.children.len() > 0 {
-                child.print_children_rec(depth + 1, vec![]);
-            } else {
-            }
-        }
-    }
-
     fn build_subtree(paths: &[PathBuf], parent: &PathBuf) -> Vec<TemplateHierarchy> {
         let mut result = Vec::new();
         let mut i = 0;
@@ -129,9 +81,29 @@ impl TemplateHierarchy {
         return result;
     }
 }
+impl TreeItem for TemplateHierarchy {
+    type Child = Self;
+
+    fn write_self<W: std::io::Write>(
+        &self,
+        f: &mut W,
+        style: &ptree::Style,
+    ) -> std::io::Result<()> {
+        return write!(
+            f,
+            "{}{}",
+            style.paint(self.path.file_name().unwrap().to_string_lossy()),
+            if self.children.len() > 0 { "/" } else { "" }
+        );
+    }
+
+    fn children(&self) -> std::borrow::Cow<[Self::Child]> {
+        return Cow::from(&self.children);
+    }
+}
 impl Display for TemplateHierarchy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.print_children_rec(0, vec![]);
+        print_tree(self);
         return Ok(());
     }
 }
