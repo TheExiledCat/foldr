@@ -7,12 +7,11 @@ use std::{
 };
 
 use bytesize::ByteSize;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{
-    cli::CliUtils, commands::command::error, config::Config, globals::FOLDR_MANIFEST_FILE,
-};
+use crate::{commands::command::error, config::Config, globals::FOLDR_MANIFEST_FILE};
 use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
@@ -28,51 +27,111 @@ pub struct TemplateInfo {
     pub iteration: u64,
 }
 
+#[derive(Debug)]
 pub struct TemplateHierarchy {
-    pub name: String,
+    pub path: PathBuf,
     pub children: Vec<TemplateHierarchy>,
-    pub depth: u8,
 }
 impl TemplateHierarchy {
-    pub fn new(name: String, depth: u8) -> Self {
-        return Self {
-            name,
-            children: vec![],
-            depth,
-        };
+    pub fn new(path: PathBuf, children: Vec<TemplateHierarchy>) -> Self {
+        return Self { path, children };
     }
-    pub fn add_child(&mut self, name: String) -> &mut TemplateHierarchy {
-        self.children
-            .push(TemplateHierarchy::new(name, self.depth + 1));
-        let added = self.children.last_mut().unwrap();
-        return added;
+    pub fn add_child(&mut self, child: TemplateHierarchy) {
+        self.children.push(child);
     }
-    pub fn add_content_children_rec(&mut self, index: usize, all_content: &Vec<PathBuf>) -> usize {
-        let mut index = index;
-        let mut delta = 0;
-        while index < all_content.len() {
-            let file = &all_content[index];
-            if file.ends_with("/") {
-                //is dir
-                let child = self.add_child(file.to_string_lossy().into_owned());
-                index += child.add_content_children_rec(index + 1, &all_content);
-            }
-            index += 1;
-            delta += 1;
+    pub fn from_paths(template_name: String, paths: &[PathBuf]) -> TemplateHierarchy {
+        let root = PathBuf::new(); // synthetic root
+        let children = Self::build_subtree(paths, &root);
+        let mut root = TemplateHierarchy::new(root, children);
+        root.path = template_name.into();
+        return root;
+    }
+    fn print_children_rec(&self, depth: u8, lastness_tree: Vec<bool>) {
+        if depth == 0 {
+            println!(
+                "{}{}",
+                "    ".repeat(depth as usize),
+                self.path.to_string_lossy()
+            );
         }
-        return delta;
+
+        for child in &self.children {
+            let mut lastness_new = lastness_tree.clone();
+            if child.path == self.children.last().unwrap().path {
+                lastness_new.push(true);
+            } else {
+                lastness_new.push(false);
+            }
+            println!(
+                "{}{}{}{}{}",
+                "   ".repeat((depth) as usize),
+                lastness_new
+                    .iter()
+                    .map(|b| if *b == true {
+                        let mut text = String::new();
+                        if depth > 0 {
+                            text.push_str(&"    ".repeat((depth - 1) as usize));
+                        } else {
+                            text.push_str(&"    ".repeat((depth + 1) as usize));
+                        }
+                        text.push_str("|");
+                        text.push_str(&"   ".repeat((depth + 1) as usize));
+                        text
+                    } else {
+                        "   ".repeat((depth + 1) as usize)
+                    })
+                    .join(""),
+                if child.path == self.children.last().unwrap().path {
+                    "└"
+                } else {
+                    "├"
+                },
+                "───",
+                child.path.file_name().unwrap().to_string_lossy()
+            );
+            if child.children.len() > 0 {
+                child.print_children_rec(depth + 1, vec![]);
+            } else {
+            }
+        }
     }
 
-    fn print_children_rec(&self) {
-        println!("{}", self.name);
-        for child in &self.children {
-            child.print_children_rec();
+    fn build_subtree(paths: &[PathBuf], parent: &PathBuf) -> Vec<TemplateHierarchy> {
+        let mut result = Vec::new();
+        let mut i = 0;
+
+        while i < paths.len() {
+            let current_path = &paths[i];
+            // Check if this path is a direct child of `parent`
+            let is_direct_child = match current_path.parent() {
+                Some(p) => p == parent,
+                None => parent.as_os_str().is_empty(), // top-level path
+            };
+
+            if is_direct_child {
+                let current = current_path.clone();
+                i += 1;
+
+                // Collect child entries of `current`
+                let mut j = i;
+                while j < paths.len() && paths[j].starts_with(&current) {
+                    j += 1;
+                }
+
+                let children = Self::build_subtree(&paths[i..j], &current);
+                result.push(TemplateHierarchy::new(current, children));
+                i = j;
+            } else {
+                i += 1;
+            }
         }
+
+        return result;
     }
 }
 impl Display for TemplateHierarchy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.print_children_rec();
+        self.print_children_rec(0, vec![]);
         return Ok(());
     }
 }
@@ -82,13 +141,12 @@ impl Template {
         ZipUtil::unzip(&self, spawn_path, vec![globals::FOLDR_MANIFEST_FILE.into()]);
     }
     pub fn get_content_hierarchy(&self) -> TemplateHierarchy {
-        let mut root = TemplateHierarchy::new(self.info.name.clone(), 0);
         let mut contents = ZipUtil::get_files(
             PathBuf::from_str(&self.filename).unwrap(),
             vec![FOLDR_MANIFEST_FILE.into()],
         );
         contents.sort_by_key(|p| p.to_string_lossy().into_owned());
-        root.add_content_children_rec(0, &contents);
+        let root = TemplateHierarchy::from_paths(self.info.name.clone(), &contents);
         return root;
     }
 
