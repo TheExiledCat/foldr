@@ -234,8 +234,12 @@ impl Template {
         return Ok(found);
     }
 
-    pub fn store<R: Read + Seek>(config: &Config, mut stream: R) -> Result<Template> {
-        let mut zip = ZipArchive::new(stream);
+    pub fn store<R: Read + Seek>(
+        config: &Config,
+        mut stream: R,
+        remove_from_output: Vec<PathBuf>,
+    ) -> Result<Template> {
+        let mut input_zip = ZipArchive::new(stream);
     }
 }
 impl TemplateInfo {
