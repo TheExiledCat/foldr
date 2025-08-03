@@ -14,7 +14,7 @@ pub enum Command {
     #[command(about = "Spawn an existing template")]
     New(NewCommand),
     #[command(about = "Install a template from an http endpoint")]
-    Fetch {},
+    Fetch(FetchCommand),
     #[command(about = "List all templates")]
     List(ListCommand),
     #[command(about = "List the contents of a template")]
@@ -31,12 +31,12 @@ pub enum Command {
     #[command(about = "")]
     Tui,
 }
-
+pub type Result<T> = Result<T, CommandError>;
 pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
     return match command {
         Command::Save(save_command) => save_command.run(config),
         Command::New(new_command) => new_command.run(config),
-        Command::Fetch {} => todo!(),
+        Command::Fetch(fetch_command) => fetch_command.run(config),
         Command::List(list_command) => list_command.run(config),
         Command::Show(show_command) => show_command.run(config),
         Command::Update(update_command) => update_command.run(config),

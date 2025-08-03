@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub template_dir: PathBuf,
     pub use_cache: bool,
+    pub require_https: bool,
 }
 
 impl Config {
@@ -17,6 +18,7 @@ impl Config {
                     .join(".foldr/templates"),
             ),
             use_cache: true,
+            require_https: false,
         }
     }
 }

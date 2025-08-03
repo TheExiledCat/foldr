@@ -7,6 +7,7 @@ mod cli;
 mod commands;
 mod config;
 mod globals;
+mod network;
 mod templates;
 mod zip;
 

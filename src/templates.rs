@@ -1,19 +1,22 @@
 use std::{
     borrow::Cow,
     fmt::Display,
-    fs::{self},
+    fs::{self, File},
+    io::{Read, Seek},
     ops::Deref,
     path::PathBuf,
     str::FromStr,
 };
 
 use bytesize::ByteSize;
+use clap::Id;
 use ptree::{TreeItem, print_tree};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use zip::ZipArchive;
 
 use crate::{
-    commands::command::{CommandError, error},
+    commands::command::{Result, error},
     config::Config,
     globals::FOLDR_MANIFEST_FILE,
 };
@@ -128,7 +131,7 @@ impl Template {
         directory: &PathBuf,
         name: &str,
         iteration: u64,
-    ) -> Result<Template, crate::commands::command::CommandError> {
+    ) -> Result<Template> {
         if let Ok(exists) = fs::exists(directory) {
             if !exists {
                 return Err(error("Non existent directory passed"));
@@ -157,10 +160,7 @@ impl Template {
             filesize: ByteSize::b(filesize),
         });
     }
-    pub fn get_existing_by_name(
-        config: &Config,
-        name: &str,
-    ) -> Result<Option<Template>, CommandError> {
+    pub fn get_existing_by_name(config: &Config, name: &str) -> Result<Option<Template>> {
         let mut templates = ZipUtil::get_templates(&config.template_dir)?;
         templates.sort_by_key(|t| t.info.iteration);
         templates.reverse();
@@ -176,7 +176,7 @@ impl Template {
         config: &Config,
         name: &str,
         iteration: u64,
-    ) -> Result<Option<Template>, CommandError> {
+    ) -> Result<Option<Template>> {
         let templates = ZipUtil::get_templates(&config.template_dir)?;
         for template in templates {
             if template.info.name == name && template.info.iteration == iteration {
@@ -186,7 +186,7 @@ impl Template {
 
         return Ok(None);
     }
-    pub fn get_existing(config: &Config) -> Result<Vec<Template>, CommandError> {
+    pub fn get_existing(config: &Config) -> Result<Vec<Template>> {
         let mut templates = ZipUtil::get_templates(&config.template_dir)?;
 
         templates.sort_by_key(|t| t.info.iteration);
@@ -196,7 +196,7 @@ impl Template {
         return Ok(templates);
     }
 
-    pub fn delete_by_name(config: &Config, name: &str) -> Result<bool, CommandError> {
+    pub fn delete_by_name(config: &Config, name: &str) -> Result<bool> {
         let templates = Self::get_existing(config)?;
 
         let mut found = false;
@@ -215,7 +215,7 @@ impl Template {
         config: &Config,
         name: &str,
         iteration: u64,
-    ) -> Result<bool, CommandError> {
+    ) -> Result<bool> {
         let templates = Self::get_existing(config)?;
 
         let mut found = false;
@@ -232,6 +232,10 @@ impl Template {
         }
 
         return Ok(found);
+    }
+
+    pub fn store<R: Read + Seek>(config: &Config, mut stream: R) -> Result<Template> {
+        let mut zip = ZipArchive::new(stream);
     }
 }
 impl TemplateInfo {
