@@ -22,8 +22,23 @@ impl RunCommand for ListCommand {
             println!("No templates stored yet. Create a new one using foldr save");
             return Ok(());
         }
-        println!("{:<20}{:<3}", "name", "version");
-        println!("{}", "-".repeat(30));
+        let mut str_template = String::from("{:<");
+        let longest_template_name = templates
+            .iter()
+            .max_by_key(|t| t.info.name.chars().count())
+            .unwrap()
+            .info
+            .name
+            .chars()
+            .count()
+            .clamp(20, usize::MAX);
+        println!(
+            "{:<width$}{:<3}",
+            "name",
+            "version",
+            width = longest_template_name,
+        );
+        println!("{}", "-".repeat(longest_template_name + 3));
         if let Some(pattern) = &self.pattern {
             templates = templates
                 .iter()
@@ -35,19 +50,25 @@ impl RunCommand for ListCommand {
         templates.sort_by_key(|i| i.info.name.clone());
         if self.flatten {
             for template in templates {
-                println!("{:<20}{:<3}", template.info.name, template.info.iteration);
+                println!(
+                    "{:<width$}{:<3}",
+                    template.info.name,
+                    template.info.iteration,
+                    width = longest_template_name
+                );
             }
         } else {
             for (key, group) in &templates.iter().chunk_by(|t| &t.info.name) {
                 println!(
-                    "{:<20}{:<3}",
+                    "{:<width$}{:<3}",
                     key.to_string(),
                     group
                         .collect::<Vec<&Template>>()
                         .iter()
                         .map(|t| t.info.iteration)
                         .last()
-                        .unwrap()
+                        .unwrap(),
+                    width = longest_template_name
                 );
             }
         }
