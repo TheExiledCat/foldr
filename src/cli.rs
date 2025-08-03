@@ -21,10 +21,10 @@ pub struct CliUtils;
 impl CliUtils {
     pub fn input(message: &str) -> String {
         let stdin = stdin();
-        stdout().flush();
+        stdout().flush().expect("IO Error");
         print!("{}\n> ", message);
         let mut text = String::new();
-        stdout().flush();
+        stdout().flush().expect("IO Error");
         stdin.read_line(&mut text).unwrap();
         if let Some('\n') = text.chars().next_back() {
             text.pop();

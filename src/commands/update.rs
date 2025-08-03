@@ -14,9 +14,9 @@ pub struct UpdateCommand {
 
 impl RunCommand for UpdateCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
-        let existing = Template::get_existing_by_name(&config, &self.name);
+        let existing = Template::get_existing_by_name(&config, &self.name)?;
         if let Some(template) = existing {
-            let result = Template::save(
+            let _result = Template::save(
                 &config,
                 &self.directory,
                 &self.name,

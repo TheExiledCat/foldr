@@ -21,9 +21,9 @@ pub struct NewCommand {
 impl RunCommand for NewCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
         let existing = if let Some(iteration) = self.iteration {
-            Template::get_existing_by_name_and_iteration(&config, &self.name, iteration)
+            Template::get_existing_by_name_and_iteration(&config, &self.name, iteration)?
         } else {
-            Template::get_existing_by_name(&config, &self.name)
+            Template::get_existing_by_name(&config, &self.name)?
         };
 
         if let None = existing {

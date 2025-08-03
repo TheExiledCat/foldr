@@ -14,8 +14,8 @@ pub struct SaveCommand {
 
 impl RunCommand for SaveCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
-        let existing = Template::get_existing_by_name(&config, &self.name);
-        if let Some(template) = existing {
+        let existing = Template::get_existing_by_name(&config, &self.name)?;
+        if let Some(_template) = existing {
             return Err(error(&format!(
                 "Template with the same name already exists: {}\nUse foldr update to overwrite",
                 &self.name

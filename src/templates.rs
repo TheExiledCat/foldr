@@ -8,12 +8,15 @@ use std::{
 };
 
 use bytesize::ByteSize;
-use itertools::Itertools;
-use ptree::{TreeBuilder, TreeItem, print_tree};
+use ptree::{TreeItem, print_tree};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{commands::command::error, config::Config, globals::FOLDR_MANIFEST_FILE};
+use crate::{
+    commands::command::{CommandError, error},
+    config::Config,
+    globals::FOLDR_MANIFEST_FILE,
+};
 use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
@@ -37,9 +40,6 @@ pub struct TemplateHierarchy {
 impl TemplateHierarchy {
     pub fn new(path: PathBuf, children: Vec<TemplateHierarchy>) -> Self {
         return Self { path, children };
-    }
-    pub fn add_child(&mut self, child: TemplateHierarchy) {
-        self.children.push(child);
     }
     pub fn from_paths(template_name: String, paths: &[PathBuf]) -> TemplateHierarchy {
         let root = PathBuf::new(); // synthetic root
@@ -102,8 +102,9 @@ impl TreeItem for TemplateHierarchy {
     }
 }
 impl Display for TemplateHierarchy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        print_tree(self);
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let _result = print_tree(self);
+
         return Ok(());
     }
 }
@@ -143,7 +144,7 @@ impl Template {
             PathBuf::from(globals::FOLDR_MANIFEST_FILE),
             json!(info).to_string(),
         )];
-        let filesize = ZipUtil::zip_dir(directory, &output_path, extra_files);
+        let filesize = ZipUtil::zip_dir(directory, &output_path, extra_files)?;
 
         return Ok(Template {
             info,
@@ -156,44 +157,47 @@ impl Template {
             filesize: ByteSize::b(filesize),
         });
     }
-    pub fn get_existing_by_name(config: &Config, name: &str) -> Option<Template> {
-        let mut templates = ZipUtil::get_templates(&config.template_dir);
+    pub fn get_existing_by_name(
+        config: &Config,
+        name: &str,
+    ) -> Result<Option<Template>, CommandError> {
+        let mut templates = ZipUtil::get_templates(&config.template_dir)?;
         templates.sort_by_key(|t| t.info.iteration);
         templates.reverse();
         for template in templates {
             if template.info.name == name {
-                return Some(template);
+                return Ok(Some(template));
             }
         }
 
-        return None;
+        return Ok(None);
     }
     pub fn get_existing_by_name_and_iteration(
         config: &Config,
         name: &str,
         iteration: u64,
-    ) -> Option<Template> {
-        let templates = ZipUtil::get_templates(&config.template_dir);
+    ) -> Result<Option<Template>, CommandError> {
+        let templates = ZipUtil::get_templates(&config.template_dir)?;
         for template in templates {
             if template.info.name == name && template.info.iteration == iteration {
-                return Some(template);
+                return Ok(Some(template));
             }
         }
 
-        return None;
+        return Ok(None);
     }
-    pub fn get_existing(config: &Config) -> Vec<Template> {
-        let mut templates = ZipUtil::get_templates(&config.template_dir);
+    pub fn get_existing(config: &Config) -> Result<Vec<Template>, CommandError> {
+        let mut templates = ZipUtil::get_templates(&config.template_dir)?;
 
         templates.sort_by_key(|t| t.info.iteration);
         templates.sort_by_key(|t| t.info.name.clone());
         templates.reverse();
 
-        return templates;
+        return Ok(templates);
     }
 
-    pub fn delete_by_name(config: &Config, name: &str) -> bool {
-        let templates = Self::get_existing(config);
+    pub fn delete_by_name(config: &Config, name: &str) -> Result<bool, CommandError> {
+        let templates = Self::get_existing(config)?;
 
         let mut found = false;
         for template in templates {
@@ -205,10 +209,14 @@ impl Template {
             }
         }
 
-        return found;
+        return Ok(found);
     }
-    pub fn delete_by_name_and_iteration(config: &Config, name: &str, iteration: u64) -> bool {
-        let templates = Self::get_existing(config);
+    pub fn delete_by_name_and_iteration(
+        config: &Config,
+        name: &str,
+        iteration: u64,
+    ) -> Result<bool, CommandError> {
+        let templates = Self::get_existing(config)?;
 
         let mut found = false;
         for template in templates {
@@ -223,7 +231,7 @@ impl Template {
             }
         }
 
-        return found;
+        return Ok(found);
     }
 }
 impl TemplateInfo {

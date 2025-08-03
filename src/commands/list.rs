@@ -17,7 +17,7 @@ pub struct ListCommand {
 
 impl RunCommand for ListCommand {
     fn run(&self, config: crate::config::Config) -> Result<(), super::command::CommandError> {
-        let mut templates = Template::get_existing(&config);
+        let mut templates = Template::get_existing(&config)?;
         if templates.len() == 0 {
             println!("No templates stored yet. Create a new one using foldr save");
             return Ok(());

@@ -26,9 +26,9 @@ impl RunCommand for DeleteCommand {
             return Err(error("Cancelled deletion"));
         }
         let success = if let Some(iteration) = self.iteration {
-            Template::delete_by_name_and_iteration(&config, &self.name, iteration)
+            Template::delete_by_name_and_iteration(&config, &self.name, iteration)?
         } else {
-            Template::delete_by_name(&config, &self.name)
+            Template::delete_by_name(&config, &self.name)?
         };
         if !success {
             return Err(error(&format!("Unable to find template: {}", &self.name)));

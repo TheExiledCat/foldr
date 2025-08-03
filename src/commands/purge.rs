@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use clap::Args;
 use itertools::Itertools;
 
@@ -14,7 +12,7 @@ pub struct PurgeCommand {
 
 impl RunCommand for PurgeCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
-        let existing = Template::get_existing(&config);
+        let existing = Template::get_existing(&config)?;
         let mut entries_deleted = 0;
         for (key, group) in &existing.iter().chunk_by(|t| t.info.name.clone()) {
             println!("key: {}, {}", key, key.chars().count());
@@ -39,7 +37,7 @@ impl RunCommand for PurgeCommand {
                     &config,
                     &key,
                     all.get(i).unwrap().info.iteration,
-                );
+                )?;
                 entries_deleted += 1;
             }
         }
