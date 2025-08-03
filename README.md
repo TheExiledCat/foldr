@@ -1,4 +1,4 @@
-# foldr
+# foldr-cli
 
 `foldr` is a blazing-fast, flexible command-line tool written in Rust for managing reusable **directory / project templates**.  
 Easily snapshot a folder structure and reuse it anytime — great for setting up projects, configurations, or boilerplate.
@@ -61,7 +61,7 @@ foldr list
 
 foldr new cproject ./new_project
 
-# Launch the terminal UI for browing and editing templates (only available when using the tui feature flag or from a prebuilt binary)
+# Launch the terminal UI for browsing and editing templates (only available when using the tui feature flag or from a prebuilt binary)
 
 foldr tui
 
@@ -69,7 +69,7 @@ foldr tui
 foldr update cproject . 
 
 # delete old versions of all or a single template
-foldr purge [Template]
+foldr purge 
 
 # show the contents of a template 
 foldr show cproject
@@ -79,6 +79,8 @@ foldr new https://example.com/template.foldr ./remote_project
 # or to create a permanent template from a remote
 foldr fetch https://example.com/template.foldr template_name
 ```
+
+for the full list of commands use `foldr --help`
 
 
 
@@ -95,7 +97,7 @@ foldr fetch https://example.com/template.foldr template_name
 
 ## ⚙️  Configuration
 
-- configurations are stored in `~/.foldr/config.json` or the file stored in the `--config` flag
+- configurations are stored in `~/.foldr/config.json` or a file can be passed in the `--config` flag
 - the config file can be created using the `foldr config` command which will create the configuration using an interactive cli
 - for config options see [Configuration](Configuration.md)
 - Note: By default foldr uses a small sqlite database cache to speed up searching and listing for templates. This can be disabled with the `use_cache` key in the config. When disabled searching and listing will manually walk the templates directory and list the templates that way, which is much slower if you have alot of templates.
@@ -104,7 +106,7 @@ foldr fetch https://example.com/template.foldr template_name
 
 ## 🔮 Roadmap
 
-- [ ] CLI with save, new, update, list, purge  
+- [X] CLI with save, new, update, list, purge  
 - [ ] TUI to browse/search templates and preview / edit them
 - [ ] Template variable substitution (creating files/directories with variable names)
 - [ ] Support for templates from remote sources  
