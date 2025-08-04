@@ -1,6 +1,4 @@
-use std::io::{Cursor, Read};
-
-use reqwest::Url;
+use std::io::{self, Cursor, Read};
 
 use crate::commands::command::{Iteration, Result, error};
 use crate::config::Config;
@@ -15,23 +13,20 @@ impl NetworkUtil {
         name: String,
         iteration: Iteration,
     ) -> Result<Template> {
-        let http_endpoint;
-        if let Ok(url) = Url::parse(&endpoint) {
-            if url.scheme() == "http" || url.scheme() == "https" {
-                http_endpoint = url;
-            } else {
-                return Err(error("Endpoint passed is not an http(s) endpoint"));
-            }
-        } else {
-            return Err(error("Invalid endpoint passed"));
+        if !endpoint.starts_with("http://") && !endpoint.starts_with("https://") {
+            return Err(error("Endpoint passed is not an http(s) endpoint"));
         }
 
-        if config.require_https && http_endpoint.scheme() != "https" {
+        if config.require_https && !endpoint.starts_with("https") {
             return Err(error("Non https endpoints not allowed by config"));
         }
-        println!("Fetching Template From {}", http_endpoint.to_string());
-        let mut response = reqwest::blocking::get(http_endpoint)
-            .map_err(|_| error("Network error while fetching template over http"))?;
+        println!("Fetching Template From {}", endpoint.to_string());
+        let mut response = ureq::get(endpoint).call().map_err(|e| {
+            error(&format!(
+                "Network error while fetching template over http: {}",
+                e.to_string()
+            ))
+        })?;
 
         if !response.status().is_success() {
             return Err(error(&format!(
@@ -39,10 +34,10 @@ impl NetworkUtil {
                 response.status().as_str()
             )));
         }
-        let mut buffer = Vec::new();
-        response
-            .read_to_end(&mut buffer)
-            .map_err(|_| error("Error copying fetched template contents"))?;
+        let mut buffer = response
+            .body_mut()
+            .read_to_vec()
+            .map_err(|_| error("Error while reading template http stream"))?;
         let mut cursor = Cursor::new(&mut buffer);
         let template = Template::store(
             &config,
