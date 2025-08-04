@@ -5,16 +5,12 @@ To pass a custom configuration file use the `--config` flag when running a comma
 
 --- 
 
-## Configuration options
+## Generating config.json
 
-Down below is a full set of configuration options you can set (this is the default configuration):
+use `foldr config` to start an interactive configuration setup.
 
-```json
-{
-  
-}
-
-```
+This will create a default config file in the specified path
 
 ## Configuration options in detail
 
+See [Configuration Keys](/CONFIGURATION_KEYS.md)
