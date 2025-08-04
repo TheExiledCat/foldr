@@ -1,18 +1,17 @@
 use std::{
     borrow::Cow,
     fmt::Display,
-    fs::{self},
-    io::{Read, Seek},
+    fs::{self, File},
+    io::{Read, Seek, Write},
     ops::Deref,
     path::PathBuf,
-    str::FromStr,
 };
 
 use bytesize::ByteSize;
 use ptree::{TreeItem, print_tree};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use zip::ZipArchive;
+use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
 use crate::{
     commands::command::{Iteration, Result, error},
@@ -22,18 +21,22 @@ use crate::{
 use crate::{globals, zip::ZipUtil};
 use sha2::{Digest, Sha256};
 
+/// Represents a template, including its file data and manifest
 #[derive(Clone)]
 pub struct Template {
     pub info: TemplateInfo,
-    pub filename: String,
+    pub filename: PathBuf,
     pub filesize: ByteSize,
 }
+
+/// Represents a template manifest, stored inside of the template file
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TemplateInfo {
     pub name: String,
     pub iteration: Iteration,
 }
 
+/// Represents the inner contents of a template file as a file hierarchy
 #[derive(Clone, Debug)]
 pub struct TemplateHierarchy {
     pub path: PathBuf,
@@ -43,6 +46,7 @@ impl TemplateHierarchy {
     pub fn new(path: PathBuf, children: Vec<TemplateHierarchy>) -> Self {
         return Self { path, children };
     }
+    /// Build a hierarchy from a sorted PathBuf slice
     pub fn from_paths(template_name: String, paths: &[PathBuf]) -> TemplateHierarchy {
         let root = PathBuf::new(); // synthetic root
         let children = Self::build_subtree(paths, &root);
@@ -50,6 +54,7 @@ impl TemplateHierarchy {
         root.path = template_name.into();
         return root;
     }
+    /// Builds the hierarchy for any child paths
     fn build_subtree(paths: &[PathBuf], parent: &PathBuf) -> Vec<TemplateHierarchy> {
         let mut result = Vec::new();
         let mut i = 0;
@@ -83,6 +88,8 @@ impl TemplateHierarchy {
         return result;
     }
 }
+
+/// Implementation for pretty printing trees
 impl TreeItem for TemplateHierarchy {
     type Child = Self;
 
@@ -112,19 +119,20 @@ impl Display for TemplateHierarchy {
 }
 
 impl Template {
+    /// Spawn the template at [`spawn_path`]
     pub fn spawn(&self, spawn_path: &PathBuf) {
         ZipUtil::unzip(&self, spawn_path, vec![globals::FOLDR_MANIFEST_FILE.into()]);
     }
+    /// Get the hierarchy of a template
     pub fn get_content_hierarchy(&self) -> TemplateHierarchy {
-        let mut contents = ZipUtil::get_files(
-            PathBuf::from_str(&self.filename).unwrap(),
-            vec![FOLDR_MANIFEST_FILE.into()],
-        );
+        let mut contents =
+            ZipUtil::get_files(self.filename.clone(), vec![FOLDR_MANIFEST_FILE.into()]);
         contents.sort_by_key(|p| p.to_string_lossy().into_owned());
         let root = TemplateHierarchy::from_paths(self.info.name.clone(), &contents);
         return root;
     }
 
+    /// Create a new template from a directory
     pub fn save(
         config: &Config,
         directory: &PathBuf,
@@ -171,6 +179,7 @@ impl Template {
 
         return Ok(None);
     }
+    /// Get an existing template stored in the template directory by name an version number
     pub fn get_existing_by_name_and_iteration(
         config: &Config,
         name: &str,
@@ -185,6 +194,7 @@ impl Template {
 
         return Ok(None);
     }
+    /// Get all existing templates in the template directory
     pub fn get_existing(config: &Config) -> Result<Vec<Template>> {
         let mut templates = ZipUtil::get_templates(&config.template_dir)?;
 
@@ -194,14 +204,17 @@ impl Template {
 
         return Ok(templates);
     }
-
+    /// Delete all iterations of a template by name
     pub fn delete_by_name(config: &Config, name: &str) -> Result<bool> {
         let templates = Self::get_existing(config)?;
 
         let mut found = false;
         for template in templates {
             if template.info.name == name {
-                println!("Deleting template file: {}", template.filename);
+                println!(
+                    "Deleting template file: {}",
+                    template.filename.to_string_lossy()
+                );
                 fs::remove_file(template.filename).unwrap();
 
                 found = true;
@@ -210,6 +223,7 @@ impl Template {
 
         return Ok(found);
     }
+    /// Delete a single iteration of a template by name and version number
     pub fn delete_by_name_and_iteration(
         config: &Config,
         name: &str,
@@ -232,21 +246,84 @@ impl Template {
 
         return Ok(found);
     }
-
+    /// Store an existing template file from a stream into a new template file. This generates a new manifest.
     pub fn store<R: Read + Seek>(
         config: &Config,
+        name: String,
+        iteration: Iteration,
         mut stream: R,
         remove_from_output: Vec<PathBuf>,
     ) -> Result<Template> {
-        let mut input_zip = ZipArchive::new(stream);
+        let mut input_zip =
+            ZipArchive::new(&mut stream).map_err(|_| error("Template file is corrupt"))?;
+        let info = TemplateInfo::new(name, iteration);
+        let output_file_path = info.generate_output_path(config);
+        let mut output_file = File::create(&output_file_path)
+            .map_err(|_| error("IO error creating template output file"))?;
+        let mut output_zip = ZipWriter::new(&mut output_file);
 
-        return Ok(todo!());
+        for i in 0..input_zip.len() {
+            let mut file = input_zip.by_index(i).unwrap();
+            let file_name;
+            if file.name() == "/" {
+                continue;
+            }
+            if let Some(name) = file.enclosed_name() {
+                file_name = name;
+            } else {
+                return Err(error(
+                    "Template file contains files trying to escape its path. Template might be harmful",
+                ));
+            }
+            if remove_from_output.contains(&file_name) {
+                continue;
+            }
+            output_zip
+                .start_file_from_path(file_name.as_path(), SimpleFileOptions::default())
+                .map_err(|_| error("IO Error creating file inside of output template file"))?;
+            let mut buffer = Vec::<u8>::new();
+            file.read_to_end(&mut buffer).map_err(|_| {
+                error(&format!(
+                    "IO Error reading file {}",
+                    file_name.to_string_lossy()
+                ))
+            })?;
+            output_zip.write_all(&buffer).map_err(|_| {
+                error(&format!(
+                    "IO Error writing file {} from template",
+                    file_name.to_string_lossy()
+                ))
+            })?;
+        }
+
+        output_zip
+            .start_file(FOLDR_MANIFEST_FILE, SimpleFileOptions::default())
+            .map_err(|_| error("IO Error creating manifest file in output template"))?;
+
+        output_zip
+            .write_all(serde_json::to_string_pretty(&info).unwrap().as_bytes())
+            .map_err(|_| error("IO Error writing manifest file in output template"))?;
+        output_zip
+            .finish()
+            .map_err(|_| error("Failure to compress template file on disk"))?;
+
+        println!("Copied template data to disk");
+        let size = output_file
+            .metadata()
+            .map_err(|_| error("Failure to get template metadata. Template still written."))?
+            .len();
+        return Ok(Template {
+            info,
+            filename: output_file_path.clone(),
+            filesize: ByteSize::b(size),
+        });
     }
 }
 impl TemplateInfo {
     pub fn new(name: String, iteration: Iteration) -> Self {
         return Self { name, iteration };
     }
+    // TODO error handling
     pub fn generate_output_path(&self, config: &Config) -> PathBuf {
         let output_dir = &config.template_dir;
         let output_file = format!(

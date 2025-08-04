@@ -24,7 +24,8 @@ impl RunCommand for SaveCommand {
         let result = Template::save(&config, &self.directory, &self.name, 1)?;
         println!(
             "Created template: {}\nSize: {}",
-            result.filename, result.filesize
+            result.filename.to_string_lossy(),
+            result.filesize
         );
         return Ok(());
     }

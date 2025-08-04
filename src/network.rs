@@ -1,27 +1,20 @@
-use std::fs::{self, File};
-use std::io::{self, Cursor, Read, copy};
-use std::time::Instant;
+use std::io::{Cursor, Read};
 
-use itertools::Itertools;
 use reqwest::Url;
-use sha2::{Digest, Sha256};
 
-use crate::commands::command::{Result, error};
+use crate::commands::command::{Iteration, Result, error};
 use crate::config::Config;
 use crate::globals::FOLDR_MANIFEST_FILE;
 use crate::templates::Template;
 pub struct NetworkUtil;
 
 impl NetworkUtil {
-    pub fn fetch_template(config: &Config, endpoint: String, name: String) -> Result<Template> {
-        let existing = Template::get_existing(&config)?;
-        if existing
-            .iter()
-            .map(|t| t.info.name.clone())
-            .contains(name.as_str())
-        {
-            return Err(error("Template name already in use"));
-        }
+    pub fn fetch_template(
+        config: &Config,
+        endpoint: String,
+        name: String,
+        iteration: Iteration,
+    ) -> Result<Template> {
         let http_endpoint;
         if let Ok(url) = Url::parse(&endpoint) {
             if url.scheme() == "http" || url.scheme() == "https" {
@@ -36,7 +29,7 @@ impl NetworkUtil {
         if config.require_https && http_endpoint.scheme() != "https" {
             return Err(error("Non https endpoints not allowed by config"));
         }
-
+        println!("Fetching Template From {}", http_endpoint.to_string());
         let mut response = reqwest::blocking::get(http_endpoint)
             .map_err(|_| error("Network error while fetching template over http"))?;
 
@@ -47,9 +40,17 @@ impl NetworkUtil {
             )));
         }
         let mut buffer = Vec::new();
-        response.read_to_end(&mut buffer);
+        response
+            .read_to_end(&mut buffer)
+            .map_err(|_| error("Error copying fetched template contents"))?;
         let mut cursor = Cursor::new(&mut buffer);
-        let template = Template::store(&config, &mut cursor, vec![FOLDR_MANIFEST_FILE.into()])?;
+        let template = Template::store(
+            &config,
+            name,
+            iteration,
+            &mut cursor,
+            vec![FOLDR_MANIFEST_FILE.into()],
+        )?;
         return Ok(template);
     }
 }

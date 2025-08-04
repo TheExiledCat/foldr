@@ -85,7 +85,7 @@ impl ZipUtil {
                 .map_err(|_| error("Error unzipping template file"))?;
             let mut manifest_file = zip
                 .by_name(&globals::FOLDR_MANIFEST_FILE)
-                .map_err(|e| error(&e.to_string()))?;
+                .map_err(|_| error("Template file contains no Manifest"))?;
             let mut manifest_content = String::new();
             manifest_file
                 .read_to_string(&mut manifest_content)
@@ -93,7 +93,7 @@ impl ZipUtil {
             templates.push(Template {
                 info: serde_json::from_str(&manifest_content)
                     .map_err(|_| error("Template manifest file corrupt"))?,
-                filename: String::from(path.to_string_lossy()),
+                filename: path.to_owned(),
                 filesize: bytesize::ByteSize::b(size),
             });
         }
