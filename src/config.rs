@@ -23,5 +23,11 @@ impl Config {
             use_cache: true,
             require_https: false,
         }
+        .ensure_created()
+    }
+
+    fn ensure_created(self) -> Self {
+        std::fs::create_dir_all(&self.template_dir).unwrap();
+        return self;
     }
 }
