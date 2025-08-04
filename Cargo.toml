@@ -2,7 +2,10 @@
 name = "foldr"
 version = "0.1.0"
 edition = "2024"
-
+license = "MIT"
+description = "Foldr, the blazing fast templating tool"
+repository = "https://github.com/TheExiledCat/foldr-cli"
+readme = "README.md"
 [dependencies]
 bytesize = "2.0.1"
 clap = { version = "4.5.41", features = ["derive"] }
