@@ -2,7 +2,7 @@ use clap::Args;
 
 use crate::{cli::CliUtils, templates::Template};
 
-use super::command::{RunCommand, error};
+use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct DeleteCommand {
@@ -12,7 +12,7 @@ pub struct DeleteCommand {
         long,
         help = "When given, only delete the specified version of the template"
     )]
-    iteration: Option<u64>,
+    iteration: Option<Iteration>,
 }
 
 impl RunCommand for DeleteCommand {

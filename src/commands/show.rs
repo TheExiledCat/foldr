@@ -2,13 +2,13 @@ use clap::Args;
 
 use crate::{config::Config, templates::Template};
 
-use super::command::{RunCommand, error};
+use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct ShowCommand {
     pub name: String,
     #[arg(short, long)]
-    pub iteration: Option<u64>,
+    pub iteration: Option<Iteration>,
 }
 
 impl RunCommand for ShowCommand {

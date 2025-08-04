@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::Display,
-    fs::{self, File},
+    fs::{self},
     io::{Read, Seek},
     ops::Deref,
     path::PathBuf,
@@ -9,14 +9,13 @@ use std::{
 };
 
 use bytesize::ByteSize;
-use clap::Id;
 use ptree::{TreeItem, print_tree};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use zip::ZipArchive;
 
 use crate::{
-    commands::command::{Result, error},
+    commands::command::{Iteration, Result, error},
     config::Config,
     globals::FOLDR_MANIFEST_FILE,
 };
@@ -32,7 +31,7 @@ pub struct Template {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TemplateInfo {
     pub name: String,
-    pub iteration: u64,
+    pub iteration: Iteration,
 }
 
 #[derive(Clone, Debug)]
@@ -130,7 +129,7 @@ impl Template {
         config: &Config,
         directory: &PathBuf,
         name: &str,
-        iteration: u64,
+        iteration: Iteration,
     ) -> Result<Template> {
         if let Ok(exists) = fs::exists(directory) {
             if !exists {
@@ -175,7 +174,7 @@ impl Template {
     pub fn get_existing_by_name_and_iteration(
         config: &Config,
         name: &str,
-        iteration: u64,
+        iteration: Iteration,
     ) -> Result<Option<Template>> {
         let templates = ZipUtil::get_templates(&config.template_dir)?;
         for template in templates {
@@ -214,7 +213,7 @@ impl Template {
     pub fn delete_by_name_and_iteration(
         config: &Config,
         name: &str,
-        iteration: u64,
+        iteration: Iteration,
     ) -> Result<bool> {
         let templates = Self::get_existing(config)?;
 
@@ -240,10 +239,12 @@ impl Template {
         remove_from_output: Vec<PathBuf>,
     ) -> Result<Template> {
         let mut input_zip = ZipArchive::new(stream);
+
+        return Ok(todo!());
     }
 }
 impl TemplateInfo {
-    pub fn new(name: String, iteration: u64) -> Self {
+    pub fn new(name: String, iteration: Iteration) -> Self {
         return Self { name, iteration };
     }
     pub fn generate_output_path(&self, config: &Config) -> PathBuf {

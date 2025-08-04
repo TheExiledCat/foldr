@@ -4,7 +4,7 @@ use clap::Args;
 
 use crate::{config::Config, templates::Template};
 
-use super::command::{RunCommand, error};
+use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct NewCommand {
@@ -14,7 +14,7 @@ pub struct NewCommand {
         long,
         help = "A number specifying the version of the template to generate. defaults to the most recent iteration"
     )]
-    pub iteration: Option<u64>,
+    pub iteration: Option<Iteration>,
     pub path: Option<PathBuf>,
 }
 

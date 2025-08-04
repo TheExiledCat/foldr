@@ -4,12 +4,15 @@ use clap::Args;
 
 use crate::{config::Config, templates::Template};
 
-use super::command::{RunCommand, error};
+use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct FetchCommand {
     pub endpoint: PathBuf,
     pub name: String,
+    pub iteration: Option<Iteration>,
+    #[arg(short, long)]
+    pub force: bool,
 }
 
 impl RunCommand for FetchCommand {

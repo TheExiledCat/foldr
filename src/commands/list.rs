@@ -22,7 +22,6 @@ impl RunCommand for ListCommand {
             println!("No templates stored yet. Create a new one using foldr save");
             return Ok(());
         }
-        let mut str_template = String::from("{:<");
         let longest_template_name = templates
             .iter()
             .max_by_key(|t| t.info.name.chars().count())

@@ -20,9 +20,8 @@ pub enum Command {
     List(ListCommand),
     #[command(about = "List the contents of a template")]
     Show(ShowCommand),
-    #[command(
-        about = "Update a template with a new version. Does not overwrite the previous version"
-    )]
+    #[command(about = "Update a template with a new version. 
+        Does not overwrite the previous version")]
     Update(UpdateCommand),
     #[command(about = "Purge older versions of templates")]
     Purge(PurgeCommand),
@@ -33,6 +32,7 @@ pub enum Command {
     Tui,
 }
 pub type Result<T> = std::result::Result<T, CommandError>;
+pub type Iteration = u64;
 pub fn run(command: Command, config: Config) -> Result<()> {
     return match command {
         Command::Save(save_command) => save_command.run(config),

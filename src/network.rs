@@ -8,13 +8,18 @@ use sha2::{Digest, Sha256};
 
 use crate::commands::command::{Result, error};
 use crate::config::Config;
+use crate::globals::FOLDR_MANIFEST_FILE;
 use crate::templates::Template;
 pub struct NetworkUtil;
 
 impl NetworkUtil {
     pub fn fetch_template(config: &Config, endpoint: String, name: String) -> Result<Template> {
         let existing = Template::get_existing(&config)?;
-        if existing.iter().map(|t| t.info.name).contains(name.as_str()) {
+        if existing
+            .iter()
+            .map(|t| t.info.name.clone())
+            .contains(name.as_str())
+        {
             return Err(error("Template name already in use"));
         }
         let http_endpoint;
@@ -33,7 +38,7 @@ impl NetworkUtil {
         }
 
         let mut response = reqwest::blocking::get(http_endpoint)
-            .map_err(|e| error("Network error while fetching template over http"))?;
+            .map_err(|_| error("Network error while fetching template over http"))?;
 
         if !response.status().is_success() {
             return Err(error(&format!(
@@ -41,10 +46,10 @@ impl NetworkUtil {
                 response.status().as_str()
             )));
         }
-        let buffer = Vec::new();
+        let mut buffer = Vec::new();
         response.read_to_end(&mut buffer);
-        let cursor = Cursor::new(&mut buffer);
-        let template = Template::store(&config, &mut cursor)?;
+        let mut cursor = Cursor::new(&mut buffer);
+        let template = Template::store(&config, &mut cursor, vec![FOLDR_MANIFEST_FILE.into()])?;
         return Ok(template);
     }
 }
