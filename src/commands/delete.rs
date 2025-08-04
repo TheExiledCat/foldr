@@ -1,4 +1,5 @@
 use clap::Args;
+use inquire::Confirm;
 
 use crate::{cli::CliUtils, templates::Template};
 
@@ -17,12 +18,15 @@ pub struct DeleteCommand {
 
 impl RunCommand for DeleteCommand {
     fn run(&self, config: crate::config::Config) -> Result<(), super::command::CommandError> {
-        let confirmed = CliUtils::input(&format!(
-            "Are you sure you want to  delete template {}? (y/n)",
+        let confirmed = Confirm::new(&format!(
+            "Are you sure you want to  delete template {}?",
             self.name
-        ));
+        ))
+        .with_default(false)
+        .prompt()
+        .map_err(|_| error("Prompt error"))?;
 
-        if confirmed != "y" && confirmed != "Y" {
+        if !confirmed {
             return Err(error("Cancelled deletion"));
         }
         let success = if let Some(iteration) = self.iteration {
