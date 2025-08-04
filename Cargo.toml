@@ -1,8 +1,8 @@
 [package]
 name = "foldr"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
-license = "MIT"
+license-file = "LICENSE"
 description = "Foldr, the blazing fast templating tool"
 repository = "https://github.com/TheExiledCat/foldr-cli"
 readme = "README.md"
