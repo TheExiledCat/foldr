@@ -21,6 +21,7 @@ Easily snapshot a folder structure and reuse it anytime — great for setting up
 
 
 
+install from [crates.io](https://crates.io/crates/foldr)
 ```bash
 # Using Cargo
 cargo install foldr
