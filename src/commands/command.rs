@@ -3,10 +3,11 @@ use clap::Subcommand;
 use crate::config::Config;
 
 use super::{
-    delete::DeleteCommand, list::ListCommand, new::NewCommand, purge::PurgeCommand,
-    save::SaveCommand, show::ShowCommand, update::UpdateCommand,
+    delete::DeleteCommand, fetch::FetchCommand, list::ListCommand, new::NewCommand,
+    purge::PurgeCommand, save::SaveCommand, show::ShowCommand, update::UpdateCommand,
 };
 
+/// Stores the kind of command being ran by the terminal. every command is a oneshot command that runs and exits.
 #[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(about = "Save a new template")]
@@ -31,8 +32,8 @@ pub enum Command {
     #[command(about = "")]
     Tui,
 }
-pub type Result<T> = Result<T, CommandError>;
-pub fn run(command: Command, config: Config) -> Result<(), CommandError> {
+pub type Result<T> = std::result::Result<T, CommandError>;
+pub fn run(command: Command, config: Config) -> Result<()> {
     return match command {
         Command::Save(save_command) => save_command.run(config),
         Command::New(new_command) => new_command.run(config),
@@ -56,5 +57,5 @@ pub fn error(message: &str) -> CommandError {
     };
 }
 pub trait RunCommand {
-    fn run(&self, config: Config) -> Result<(), CommandError>;
+    fn run(&self, config: Config) -> Result<()>;
 }

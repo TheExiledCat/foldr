@@ -1,5 +1,6 @@
 pub mod command;
 pub mod delete;
+pub mod fetch;
 pub mod list;
 pub mod new;
 pub mod purge;
