@@ -12,7 +12,7 @@ Easily snapshot a folder structure and reuse it anytime — great for setting up
 - 🗃️ Templates are compressed as ZIPs for efficient storage  
 - 🧭 Supports versioning per template  
 - 🔧 Configurable storage location (default: `~/.foldr`)  
-- 🖥️ Optional terminal UI using `ratatui`  
+- 🖥️ Optional terminal UI using `ratatui`  (Available in a future release) 
 - 🛠️ Future support for variable substitution and remote templates  
 
 ---
@@ -34,8 +34,8 @@ cargo install foldr
 Or build from source using cargo toolchain:
 
 ```bash
-git clone https://github.com/yourname/foldr.git
-cd foldr
+git clone https://github.com/TheExiledCat/foldr-cli
+cd foldr-cli
 cargo build --release 
 # or cargo build --release --features tui if you want tui support
 ```
