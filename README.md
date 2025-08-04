@@ -13,7 +13,7 @@ Easily snapshot a folder structure and reuse it anytime — great for setting up
 - 🧭 Supports versioning per template  
 - 🔧 Configurable storage location (default: `~/.foldr`)  
 - 🖥️ Optional terminal UI using `ratatui`  (Available in a future release) 
-- 🛠️ Future support for variable substitution and remote templates  
+- 🛠️ Variable substitution and remote templates  
 
 ---
 
@@ -75,7 +75,7 @@ foldr purge
 foldr show cproject
 
 # http support for fetching remote templates and easy sharing of templates
-foldr new https://example.com/template.foldr ./remote_project
+foldr new https://example.com/template.foldr ./remote_project (Not available in version 0.1.0)
 # or to create a permanent template from a remote
 foldr fetch https://example.com/template.foldr template_name
 ```
@@ -90,12 +90,12 @@ for the full list of commands use `foldr --help`
 
 - Templates are stored in: 
   - `~/.foldr/templates/` on linux and mac 
-  - `%USERPROFILE%\foldr\templates` on windows
+  - `%USERPROFILE%\.foldr\templates` on windows
 - Each template is saved as a `.foldr` file with versioning support (its really just a zip file containing the folder and also some metadata)
 
 ---
 
-## ⚙️  Configuration
+## ⚙️  Configuration (WIP)
 
 - configurations are stored in `~/.foldr/config.json` or a file can be passed in the `--config` flag
 - the config file can be created using the `foldr config` command which will create the configuration using an interactive cli

@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
+    /// Directory where template are stored
     pub template_dir: PathBuf,
+    /// Whether to use the sqlite database as a cache to speed up template queries
     pub use_cache: bool,
+    /// Requires https when fetching from remote template repositories
     pub require_https: bool,
 }
 
