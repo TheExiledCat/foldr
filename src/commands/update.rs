@@ -8,18 +8,20 @@ use super::command::{RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct UpdateCommand {
-    pub name: String,
+    #[arg(help = "Template to update")]
+    pub template_name: String,
+    #[arg(help = "Directory to update the template with")]
     pub directory: PathBuf,
 }
 
 impl RunCommand for UpdateCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
-        let existing = Template::get_existing_by_name(&config, &self.name)?;
+        let existing = Template::get_existing_by_name(&config, &self.template_name)?;
         if let Some(template) = existing {
             let _result = Template::save(
                 &config,
                 &self.directory,
-                &self.name,
+                &self.template_name,
                 template.info.iteration + 1,
             )?;
 
@@ -30,7 +32,7 @@ impl RunCommand for UpdateCommand {
         } else {
             return Err(error(&format!(
                 "Template to update not found: {}",
-                self.name
+                self.template_name
             )));
         }
         return Ok(());

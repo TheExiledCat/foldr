@@ -7,7 +7,8 @@ use super::command::{RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct PurgeCommand {
-    pub name: Option<String>,
+    #[arg(help = "Optional template name to purge. Defaults to all templates")]
+    pub template_name: Option<String>,
 }
 
 impl RunCommand for PurgeCommand {
@@ -15,12 +16,12 @@ impl RunCommand for PurgeCommand {
         let existing = Template::get_existing(&config)?;
         let mut entries_deleted = 0;
         for (key, group) in &existing.iter().chunk_by(|t| t.info.name.clone()) {
-            if let Some(name) = &self.name {
+            if let Some(name) = &self.template_name {
                 if key != name.clone() {
                     continue;
                 }
             }
-            let mut all = if let Some(name) = &self.name {
+            let mut all = if let Some(name) = &self.template_name {
                 group
                     .filter(|g| g.info.name == name.clone())
                     .collect::<Vec<&Template>>()

@@ -7,7 +7,8 @@ use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct DeleteCommand {
-    name: String,
+    #[arg(help = "Template to delete")]
+    template_name: String,
     #[arg(
         short,
         long,
@@ -20,7 +21,7 @@ impl RunCommand for DeleteCommand {
     fn run(&self, config: crate::config::Config) -> Result<(), super::command::CommandError> {
         let confirmed = Confirm::new(&format!(
             "Are you sure you want to  delete template {}?",
-            self.name
+            self.template_name
         ))
         .with_default(false)
         .prompt()
@@ -30,12 +31,15 @@ impl RunCommand for DeleteCommand {
             return Err(error("Cancelled deletion"));
         }
         let success = if let Some(iteration) = self.iteration {
-            Template::delete_by_name_and_iteration(&config, &self.name, iteration)?
+            Template::delete_by_name_and_iteration(&config, &self.template_name, iteration)?
         } else {
-            Template::delete_by_name(&config, &self.name)?
+            Template::delete_by_name(&config, &self.template_name)?
         };
         if !success {
-            return Err(error(&format!("Unable to find template: {}", &self.name)));
+            return Err(error(&format!(
+                "Unable to find template: {}",
+                &self.template_name
+            )));
         }
         return Ok(());
     }

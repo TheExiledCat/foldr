@@ -6,6 +6,7 @@ use super::command::RunCommand;
 
 #[derive(Args, Debug)]
 pub struct ListCommand {
+    #[arg(help = "An optional grep style pattern used to filter the list output")]
     pattern: Option<String>,
     #[arg(
         short,

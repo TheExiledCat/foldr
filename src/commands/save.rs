@@ -8,7 +8,9 @@ use super::command::{RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct SaveCommand {
+    #[arg(help = "The directory to save as a template")]
     pub directory: PathBuf,
+    #[arg(help = "The name for the template. Must be unique")]
     pub name: String,
 }
 

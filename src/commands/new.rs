@@ -8,28 +8,32 @@ use super::command::{Iteration, RunCommand, error};
 
 #[derive(Args, Debug)]
 pub struct NewCommand {
-    pub name: Option<String>,
+    #[arg(
+        help = "The template to spawn. Can also be a remote template fetched over http. If no template is passed, a fuzzy finder will open instead"
+    )]
+    pub template_name: Option<String>,
     #[arg(
         short,
         long,
-        help = "A number specifying the version of the template to generate. defaults to the most recent iteration"
+        help = "A number specifying the version of the template to generate. Defaults to the most recent iteration"
     )]
     pub iteration: Option<Iteration>,
+    #[arg(help = "The output path to spawn the template into. Defaults to the current directory")]
     pub path: Option<PathBuf>,
 }
 
 impl RunCommand for NewCommand {
     fn run(&self, config: Config) -> Result<(), super::command::CommandError> {
         let name;
-        if let None = self.name {
+        if let None = self.template_name {
             let all_existing = Template::get_existing(&config)?;
             name = CliUtils::template_fuzzy_find(all_existing)?;
         } else {
-            name = self.name.clone().unwrap();
+            name = self.template_name.clone().unwrap();
         }
 
         let spawn_path = self.path.clone().unwrap_or("./".into());
-        if let Some(name) = self.name.clone() {
+        if let Some(name) = self.template_name.clone() {
             if name.starts_with("http://") || name.starts_with("https://") {
                 // Fetch from remote
                 NetworkUtil::fetch_and_spawn_template(&config, name.clone(), spawn_path.clone())?;
