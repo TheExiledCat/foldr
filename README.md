@@ -75,7 +75,7 @@ foldr purge
 foldr show cproject
 
 # http support for fetching remote templates and easy sharing of templates
-foldr new https://example.com/template.foldr ./remote_project (Not available in version 0.1.0)
+foldr new https://example.com/template.foldr ./remote_project (Not available in version 0.1.x)
 # or to create a permanent template from a remote
 foldr fetch https://example.com/template.foldr template_name
 ```
@@ -88,9 +88,7 @@ for the full list of commands use `foldr --help`
 
 ## 📁 Template Storage
 
-- Templates are stored in: 
-  - `~/.foldr/templates/` on linux and mac 
-  - `%USERPROFILE%\.foldr\templates` on windows
+- Templates are stored in `~/.foldr/templates/`
 - Each template is saved as a `.foldr` file with versioning support (its really just a zip file containing the folder and also some metadata)
 
 ---
@@ -99,7 +97,7 @@ for the full list of commands use `foldr --help`
 
 - configurations are stored in `~/.foldr/config.json` or a file can be passed in the `--config` flag
 - the config file can be created using the `foldr config` command which will create the configuration using an interactive cli
-- for config options see [Configuration](Configuration.md)
+- for config options see [Configuration](CONFIGURATION.md)
 - Note: By default foldr uses a small sqlite database cache to speed up searching and listing for templates. This can be disabled with the `use_cache` key in the config. When disabled searching and listing will manually walk the templates directory and list the templates that way, which is much slower if you have alot of templates.
 
 ---
@@ -111,6 +109,7 @@ for the full list of commands use `foldr --help`
 - [ ] Template variable substitution (creating files/directories with variable names using interactive cli)
 - [X] Support for templates from remote sources  
 - [ ] Publishing templates for sharing  
+- [ ] Cross-platform support for mac and windows
 
 ---
 
