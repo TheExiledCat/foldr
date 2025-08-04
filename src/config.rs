@@ -15,11 +15,7 @@ pub struct Config {
 impl Config {
     pub fn default() -> Self {
         Self {
-            template_dir: PathBuf::from(
-                dirs::home_dir()
-                    .expect("Home env variable must be set")
-                    .join(".foldr/templates"),
-            ),
+            template_dir: PathBuf::from("~/.foldr/templates"),
             use_cache: true,
             require_https: false,
         }
@@ -27,7 +23,16 @@ impl Config {
     }
 
     fn ensure_created(self) -> Self {
-        std::fs::create_dir_all(&self.template_dir).unwrap();
+        std::fs::create_dir_all(&self.template_dir.expand()).unwrap();
         return self;
+    }
+}
+
+pub trait ExpandablePathBuf {
+    fn expand(&self) -> Self;
+}
+impl ExpandablePathBuf for PathBuf {
+    fn expand(&self) -> Self {
+        return PathBuf::from(shellexpand::tilde(&self.display().to_string()).into_owned());
     }
 }

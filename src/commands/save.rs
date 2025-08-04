@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::{config::Config, templates::Template};
+use crate::{
+    config::{Config, ExpandablePathBuf},
+    templates::Template,
+};
 
 use super::command::{RunCommand, error};
 
@@ -23,7 +26,7 @@ impl RunCommand for SaveCommand {
                 &self.name
             )));
         }
-        let result = Template::save(&config, &self.directory, &self.name, 1)?;
+        let result = Template::save(&config, &self.directory.expand(), &self.name, 1)?;
         println!(
             "Created template: {}\nSize: {}",
             result.filename.to_string_lossy(),

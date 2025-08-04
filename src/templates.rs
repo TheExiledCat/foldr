@@ -15,7 +15,7 @@ use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
 use crate::{
     commands::command::{Iteration, Result, error},
-    config::Config,
+    config::{Config, ExpandablePathBuf},
     globals::FOLDR_MANIFEST_FILE,
 };
 use crate::{globals, zip::ZipUtil};
@@ -168,7 +168,7 @@ impl Template {
         });
     }
     pub fn get_existing_by_name(config: &Config, name: &str) -> Result<Option<Template>> {
-        let mut templates = ZipUtil::get_templates(&config.template_dir)?;
+        let mut templates = ZipUtil::get_templates(&config.template_dir.expand())?;
         templates.sort_by_key(|t| t.info.iteration);
         templates.reverse();
         for template in templates {
@@ -185,7 +185,7 @@ impl Template {
         name: &str,
         iteration: Iteration,
     ) -> Result<Option<Template>> {
-        let templates = ZipUtil::get_templates(&config.template_dir)?;
+        let templates = ZipUtil::get_templates(&config.template_dir.expand())?;
         for template in templates {
             if template.info.name == name && template.info.iteration == iteration {
                 return Ok(Some(template));
@@ -196,7 +196,7 @@ impl Template {
     }
     /// Get all existing templates in the template directory
     pub fn get_existing(config: &Config) -> Result<Vec<Template>> {
-        let mut templates = ZipUtil::get_templates(&config.template_dir)?;
+        let mut templates = ZipUtil::get_templates(&config.template_dir.expand())?;
 
         templates.sort_by_key(|t| t.info.iteration);
         templates.sort_by_key(|t| t.info.name.clone());
@@ -333,7 +333,7 @@ impl TemplateInfo {
     }
     // TODO error handling
     pub fn generate_output_path(&self, config: &Config) -> PathBuf {
-        let output_dir = &config.template_dir;
+        let output_dir = &config.template_dir.expand();
         let output_file = format!(
             "{}/{}-{}.foldr",
             output_dir.to_string_lossy(),

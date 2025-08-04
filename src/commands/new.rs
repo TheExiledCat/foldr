@@ -2,7 +2,12 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::{cli::CliUtils, config::Config, network::NetworkUtil, templates::Template};
+use crate::{
+    cli::CliUtils,
+    config::{Config, ExpandablePathBuf},
+    network::NetworkUtil,
+    templates::Template,
+};
 
 use super::command::{Iteration, RunCommand, error};
 
@@ -32,7 +37,8 @@ impl RunCommand for NewCommand {
             name = self.template_name.clone().unwrap();
         }
 
-        let spawn_path = self.path.clone().unwrap_or("./".into());
+        let mut spawn_path = self.path.clone().unwrap_or("./".into());
+        spawn_path = spawn_path.expand();
         if let Some(name) = self.template_name.clone() {
             if name.starts_with("http://") || name.starts_with("https://") {
                 // Fetch from remote

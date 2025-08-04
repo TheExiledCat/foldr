@@ -1,4 +1,5 @@
 pub mod command;
+pub mod config;
 pub mod delete;
 pub mod fetch;
 pub mod list;

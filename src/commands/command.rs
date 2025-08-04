@@ -3,8 +3,9 @@ use clap::Subcommand;
 use crate::config::Config;
 
 use super::{
-    delete::DeleteCommand, fetch::FetchCommand, list::ListCommand, new::NewCommand,
-    purge::PurgeCommand, save::SaveCommand, show::ShowCommand, update::UpdateCommand,
+    config::ConfigCommand, delete::DeleteCommand, fetch::FetchCommand, list::ListCommand,
+    new::NewCommand, purge::PurgeCommand, save::SaveCommand, show::ShowCommand,
+    update::UpdateCommand,
 };
 
 /// Stores the kind of command being ran by the terminal. every command is a oneshot command that runs and exits.
@@ -27,6 +28,8 @@ pub enum Command {
     Purge(PurgeCommand),
     #[command(about = "Delete all or a specific version of a template")]
     Delete(DeleteCommand),
+    #[command(about = "Generate the default configuration")]
+    Config(ConfigCommand),
     #[cfg(feature = "tui")]
     #[command(about = "")]
     Tui,
@@ -42,10 +45,10 @@ pub fn run(command: Command, config: Config) -> Result<()> {
         Command::Show(show_command) => show_command.run(config),
         Command::Update(update_command) => update_command.run(config),
         Command::Purge(purge_command) => purge_command.run(config),
-
         Command::Delete(delete_command) => delete_command.run(config),
         #[cfg(feature = "tui")]
         Command::Tui => todo!(),
+        Command::Config(config_command) => config_command.generate_config(),
     };
 }
 pub struct CommandError {
