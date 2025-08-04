@@ -1,3 +1,4 @@
+![Showcase](showcase.gif)
 # foldr-cli
 
 `foldr` is a blazing-fast, flexible command-line tool written in Rust for managing reusable **directory / project templates**.  
