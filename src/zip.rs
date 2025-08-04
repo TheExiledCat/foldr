@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File},
-    io::{self, BufReader, Read, Write},
+    io::{self, BufReader, Read, Seek, Write},
     path::PathBuf,
 };
 
@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
 use crate::{
-    commands::command::{CommandError, error},
+    commands::command::{Result, error},
     globals,
     templates::Template,
 };
@@ -20,7 +20,7 @@ impl ZipUtil {
         input_dir: &PathBuf,
         output_file: &PathBuf,
         extra_files: Vec<(PathBuf, String)>,
-    ) -> Result<u64, CommandError> {
+    ) -> Result<u64> {
         let file = File::create(output_file).unwrap();
         let mut writer = ZipWriter::new(file);
         let options = SimpleFileOptions::default();
@@ -67,7 +67,7 @@ impl ZipUtil {
             .map_err(|_e| error("Error querying output file size"))?
             .len());
     }
-    pub fn get_templates(template_dir: &PathBuf) -> Result<Vec<Template>, CommandError> {
+    pub fn get_templates(template_dir: &PathBuf) -> Result<Vec<Template>> {
         if !template_dir.is_dir() {
             return Err(error("Template directory points to non directory path"));
         }
@@ -129,6 +129,37 @@ impl ZipUtil {
         }
     }
 
+    pub fn unzip_from_stream<R: Read + Seek>(
+        spawn_path: &PathBuf,
+        stream: R,
+        hide_from_output: Vec<PathBuf>,
+    ) -> Result<()> {
+        let mut zip = ZipArchive::new(stream).unwrap();
+
+        for i in 0..zip.len() {
+            let mut file = zip.by_index(i).unwrap();
+            if hide_from_output
+                .iter()
+                .find(|p| p.to_string_lossy() == file.name())
+                .iter()
+                .len()
+                > 0
+            {
+                continue;
+            }
+            let out_path = spawn_path.join(file.name());
+            if file.name().ends_with("/") {
+                fs::create_dir_all(&out_path).unwrap();
+            } else {
+                if let Some(parent) = out_path.parent() {
+                    fs::create_dir_all(parent).unwrap();
+                }
+                let mut out_file = File::create(&out_path).unwrap();
+                io::copy(&mut file, &mut out_file).unwrap();
+            }
+        }
+        return Ok(());
+    }
     pub fn get_files(filename: PathBuf, hide_from_output: Vec<String>) -> Vec<PathBuf> {
         let file = File::open(filename).unwrap();
 

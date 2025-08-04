@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::{cli::CliUtils, config::Config, templates::Template};
+use crate::{cli::CliUtils, config::Config, network::NetworkUtil, templates::Template};
 
 use super::command::{Iteration, RunCommand, error};
 
@@ -28,6 +28,19 @@ impl RunCommand for NewCommand {
             name = self.name.clone().unwrap();
         }
 
+        let spawn_path = self.path.clone().unwrap_or("./".into());
+        if let Some(name) = self.name.clone() {
+            if name.starts_with("http://") || name.starts_with("https://") {
+                // Fetch from remote
+                NetworkUtil::fetch_and_spawn_template(&config, name.clone(), spawn_path.clone())?;
+                println!(
+                    "Spawned template {} into {}",
+                    name,
+                    spawn_path.to_string_lossy()
+                );
+                return Ok(());
+            }
+        }
         let existing = if let Some(iteration) = self.iteration {
             Template::get_existing_by_name_and_iteration(&config, &name, iteration)?
         } else {
@@ -38,7 +51,6 @@ impl RunCommand for NewCommand {
             return Err(error("Template or template version not found"));
         }
         let existing = existing.unwrap();
-        let spawn_path = self.path.clone().unwrap_or("./".into());
 
         existing.spawn(&spawn_path);
         println!(

@@ -4,11 +4,7 @@ use crate::{
 };
 use clap::Parser;
 use inquire::{Autocomplete, Text, autocompletion};
-use itertools::Itertools;
-use std::{
-    io::{Write, stdin, stdout},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 ///Cli arguments struct for clap
 #[derive(Parser, Debug)]
 #[command(name = "foldr")]
@@ -52,7 +48,7 @@ impl Autocomplete for TextCompleter {
         highlighted_suggestion: Option<String>,
     ) -> std::result::Result<autocompletion::Replacement, inquire::CustomUserError> {
         if let Some(suggestion) = &highlighted_suggestion {
-            return Ok(highlighted_suggestion);
+            return Ok(Some(suggestion.clone()));
         }
         let suggestions = self
             .get_suggestions(&input.trim().replace(" ", ""))
@@ -65,24 +61,6 @@ impl Autocomplete for TextCompleter {
     }
 }
 impl CliUtils {
-    /// a rust version of the python `input` command. used to easily display and read input from stdin
-    pub fn input(message: &str) -> String {
-        let stdin = stdin();
-        stdout().flush().expect("IO Error");
-        print!("{}\n> ", message);
-        let mut text = String::new();
-        stdout().flush().expect("IO Error");
-        stdin.read_line(&mut text).unwrap();
-        if let Some('\n') = text.chars().next_back() {
-            text.pop();
-        }
-        if let Some('\r') = text.chars().next_back() {
-            text.pop();
-        }
-
-        return text;
-    }
-
     pub fn template_fuzzy_find(templates: Vec<Template>) -> Result<String> {
         let completer = TextCompleter::new(
             templates

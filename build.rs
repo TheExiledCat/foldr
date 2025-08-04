@@ -1,5 +1,5 @@
 use std::{env, fs, path::Path};
-use syn::{Attribute, Field, Item, Lit, Meta, MetaNameValue, Type};
+use syn::{Attribute, Item, Lit, Meta, Type};
 fn generate_config_docs() {
     // Path to the Rust source file containing the struct
     let rust_file_path = "src/config.rs";

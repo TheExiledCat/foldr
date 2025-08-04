@@ -30,6 +30,9 @@ tui = []
 [profile.release]
 strip = true
 panic = "abort"
+lto=true
+codegen-units = 1
+debug = false
 
 [build-dependencies]
 syn = { version = "1", features = ["full"] }

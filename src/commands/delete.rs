@@ -1,7 +1,7 @@
 use clap::Args;
 use inquire::Confirm;
 
-use crate::{cli::CliUtils, templates::Template};
+use crate::templates::Template;
 
 use super::command::{Iteration, RunCommand, error};
 

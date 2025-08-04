@@ -15,7 +15,6 @@ impl RunCommand for PurgeCommand {
         let existing = Template::get_existing(&config)?;
         let mut entries_deleted = 0;
         for (key, group) in &existing.iter().chunk_by(|t| t.info.name.clone()) {
-            println!("key: {}, {}", key, key.chars().count());
             if let Some(name) = &self.name {
                 if key != name.clone() {
                     continue;

@@ -318,6 +318,14 @@ impl Template {
             filesize: ByteSize::b(size),
         });
     }
+    pub fn spawn_from_stream<R: Read + Seek>(
+        config: &Config,
+        spawn_path: &PathBuf,
+        mut stream: R,
+        remove_from_output: Vec<PathBuf>,
+    ) -> Result<()> {
+        return ZipUtil::unzip_from_stream(spawn_path, &mut stream, remove_from_output);
+    }
 }
 impl TemplateInfo {
     pub fn new(name: String, iteration: Iteration) -> Self {
