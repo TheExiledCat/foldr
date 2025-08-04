@@ -106,10 +106,10 @@ for the full list of commands use `foldr --help`
 
 ## 🔮 Roadmap
 
-- [X] CLI with save, new, update, list, purge  
+- [X] CLI templating functionality 
 - [ ] TUI to browse/search templates and preview / edit them
-- [ ] Template variable substitution (creating files/directories with variable names)
-- [ ] Support for templates from remote sources  
+- [ ] Template variable substitution (creating files/directories with variable names using interactive cli)
+- [X] Support for templates from remote sources  
 - [ ] Publishing templates for sharing  
 
 ---
